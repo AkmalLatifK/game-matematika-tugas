@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitung Cepat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#eef2f6;--line:#d3dbe6;--ink:#1b2a4a;--soft:#5b6b88;--card:#fff;--hl:#ffd84d;--ok:#1f8f5f;--bad:#d93f45}
+@media (prefers-color-scheme:dark){:root{--paper:#141a2c;--line:#222c47;--ink:#e8edf8;--soft:#98a6c4;--card:#1b2340;--hl:#e8b92a;--ok:#4cc38a;--bad:#ff6b70}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:"Bricolage Grotesque",system-ui,sans-serif;color:var(--ink);background:var(--paper);
+background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;
+display:flex;justify-content:center;padding:24px 16px}
+main{width:100%;max-width:460px}
+h1{font-size:2.6rem;font-weight:800;margin:8px 0 4px;letter-spacing:-.02em}
+h1 mark{background:var(--hl);color:#1b2a4a;padding:0 .15em;border-radius:4px}
+p{color:var(--soft);margin:0 0 20px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.modes button{background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:14px 10px;text-align:left;box-shadow:3px 3px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.modes button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.modes button.wide{grid-column:1/-1;background:var(--hl);color:#1b2a4a;border-color:#1b2a4a}
+.modes b{display:block;font-size:1.5rem}
+.modes small{color:var(--soft);font-size:.85rem}
+.modes .wide small{color:#3a4668}
+.bar{display:flex;justify-content:space-between;font-weight:500;margin-bottom:10px}
+.timer{height:10px;background:var(--card);border:2px solid var(--ink);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.timer i{display:block;height:100%;width:100%;background:var(--ink)}
+.timer.low i{background:var(--bad)}
+.q{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:28px 12px;text-align:center;font-size:clamp(2.6rem,13vw,3.8rem);font-weight:800;font-variant-numeric:tabular-nums;transition:border-color .15s,background .15s}
+.q span{color:var(--soft);margin:0 .15em}
+.q.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card))}
+.q.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+.fb{min-height:1.6em;margin:10px 0;font-weight:500;text-align:center}
+.row{display:flex;gap:10px}
+input{flex:1;min-width:0;font:inherit;font-size:1.6rem;font-weight:800;text-align:center;padding:12px;border:2px solid var(--ink);border-radius:12px;background:var(--card);color:var(--ink)}
+.go{background:var(--ink);color:var(--paper);border:0;border-radius:12px;padding:0 22px;font-weight:800;font-size:1.1rem}
+.go:disabled{opacity:.5}
+.big{font-size:4.5rem;font-weight:800;line-height:1;margin:6px 0}
+.sum{color:var(--soft);margin-bottom:16px}
+ul{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:8px}
+li{background:var(--card);border-left:6px solid var(--bad);border-radius:8px;padding:10px 12px;font-variant-numeric:tabular-nums}
+li small{display:block;color:var(--soft)}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;padding:13px;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-weight:800}
+.btns .main{background:var(--hl);color:#1b2a4a}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<section id="menu">
+  <h1>Hitung <mark>Cepat</mark></h1>
+  <p>10 soal, 15 detik per soal. Angka diacak ulang setiap kali main. Pilih jenis soal:</p>
+  <div class="modes">
+    <button class="wide" data-m="campur"><b>Campuran</b><small></small></button>
+    <button data-m="+"><b>Penjumlahan</b><small></small></button>
+    <button data-m="−"><b>Pengurangan</b><small></small></button>
+    <button data-m="×"><b>Perkalian</b><small></small></button>
+    <button data-m="÷"><b>Pembagian</b><small></small></button>
+  </div>
+</section>
+
+<section id="game" hidden>
+  <div class="bar"><span id="no"></span><span id="sc"></span><span id="sk"></span></div>
+  <div class="timer" id="tm"><i id="tb"></i></div>
+  <div class="q" id="q"></div>
+  <div class="fb" id="fb" aria-live="polite"></div>
+  <div class="row">
+    <input id="ans" type="text" inputmode="numeric" autocomplete="off" aria-label="Jawaban">
+    <button class="go" id="go">Jawab</button>
+  </div>
+</section>
+
+<section id="result" hidden>
+  <h1>Selesai</h1>
+  <div class="big" id="rs"></div>
+  <div class="sum" id="rm"></div>
+  <ul id="wr"></ul>
+  <div class="btns"><button class="main" id="again">Main lagi</button><button id="home">Pilih jenis soal</button></div>
+</section>
+</main>
+
+<script>
+const TOTAL=10, TIME=15;
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+// Aturan soal
+const OPS={
+  '+':()=>{const a=R(1,100),b=R(1,100);return{a,b,ans:a+b}},
+  '−':()=>{let a=R(1,100),b=R(1,100);if(b>a)[a,b]=[b,a];return{a,b,ans:a-b}},
+  '×':()=>{const a=R(1,20),b=R(1,20);return{a,b,ans:a*b}},
+  '÷':()=>{const b=R(1,20),q=R(1,20);return{a:b*q,b,ans:q}} // selalu habis dibagi
+};
+const make=m=>{const op=m==='campur'?'+−×÷'[R(0,3)]:m;return{op,...OPS[op]()}};
+
+const best=m=>{try{return +localStorage.getItem('hc-'+m)||0}catch(e){return 0}};
+const saveBest=(m,v)=>{try{if(v>best(m))localStorage.setItem('hc-'+m,v)}catch(e){}};
+const show=id=>['menu','game','result'].forEach(s=>$('#'+s).hidden=s!==id);
+
+let st, deadline, tick;
+
+function menu(){
+  document.querySelectorAll('[data-m]').forEach(b=>{
+    const v=best(b.dataset.m);b.querySelector('small').textContent=v?'Skor terbaik '+v:'Belum pernah main';
+  });
+  show('menu');
+}
+function start(m){st={m,i:0,score:0,streak:0,right:0,wrong:[]};show('game');next()}
+
+function next(){
+  if(st.i>=TOTAL)return finish();
+  st.i++;st.q=make(st.m);st.locked=false;
+  const q=st.q;
+  $('#q').className='q';
+  $('#q').innerHTML=`${q.a}<span>${q.op}</span>${q.b}`;
+  $('#fb').textContent='';
+  $('#no').textContent=`Soal ${st.i}/${TOTAL}`;
+  $('#sc').textContent=`Skor ${st.score}`;
+  $('#sk').textContent=st.streak>1?`Beruntun ${st.streak}`:'';
+  $('#ans').value='';$('#ans').disabled=false;$('#go').disabled=false;$('#ans').focus();
+  deadline=Date.now()+TIME*1000;
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    const left=Math.max(0,(deadline-Date.now())/1000);
+    $('#tb').style.width=(left/TIME*100)+'%';
+    $('#tm').classList.toggle('low',left<5);
+    if(left<=0)answer(null);
+  },100);
+}
+
+function answer(v){
+  if(st.locked)return;
+  st.locked=true;clearInterval(tick);
+  const left=Math.max(0,(deadline-Date.now())/1000), q=st.q;
+  const ok=v===q.ans;
+  $('#ans').disabled=true;$('#go').disabled=true;
+  $('#q').classList.add(ok?'ok':'no');
+  if(ok){
+    st.right++;st.streak++;st.score+=10+Math.ceil(left/3);
+    $('#fb').textContent='Benar!';
+  }else{
+    st.streak=0;st.wrong.push({q,v});
+    $('#fb').textContent=(v===null?'Waktu habis. ':'Belum tepat. ')+`Jawaban: ${q.ans}`;
+  }
+  $('#sc').textContent=`Skor ${st.score}`;
+  setTimeout(next,ok?700:1600);
+}
+
+function submit(){
+  const t=$('#ans').value.trim();
+  if(!/^-?\d+$/.test(t))return;
+  answer(parseInt(t,10));
+}
+
+function finish(){
+  saveBest(st.m,st.score);
+  $('#rs').textContent=st.score;
+  $('#rm').textContent=`${st.right} dari ${TOTAL} soal benar. Skor terbaik: ${best(st.m)}`;
+  $('#wr').innerHTML=st.wrong.length
+    ?st.wrong.map(w=>`<li>${w.q.a} ${w.q.op} ${w.q.b} = ${w.q.ans}<small>Jawabanmu: ${w.v===null?'tidak dijawab':w.v}</small></li>`).join('')
+    :'<li style="border-color:var(--ok)">Semua benar. Mantap!</li>';
+  show('result');
+}
+
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>start(b.dataset.m));
+$('#go').onclick=submit;
+$('#ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+$('#again').onclick=()=>start(st.m);
+$('#home').onclick=menu;
+menu();
+</script>
+</body>
+</html>
